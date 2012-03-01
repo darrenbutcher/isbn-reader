@@ -1,0 +1,1236 @@
+Script started on Sat Dec 18 20:02:11 2010
+dbutcher@matrix:~/oop244/a3> whoami
+dbutcher
+dbutcher@matrix:~/oop244/a3> whoami[2Pexit[1@a.outg++ a4main.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp SpeecialOrder.cpp[Ax:~/oop244/a3> cat a4main.cpp [K
+[K[Adbutcher@matrix:~/oop244/a3> cat a4main.cpp [10Pa.outg++ a4test.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp SpeecialOrder.cpp[Ax:~/oop244/a3> [31Pcat SpecialOrder.cp
+[K[Adbutcher@matrix:~/oop244/a3> cat SpecialOrder.cpp[2Ph[5POrder.cpp[2PhISBN.cpp[2PhPrefix.cpp[2Ph
+/**
+  * Name: ISBNPrefix.h
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: Nov 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+
+class ISBNPrefix{
+        FILE* fp;
+        ISBNPrefix(const ISBNPrefix& source);           
+        ISBNPrefix& operator=(const ISBNPrefix& source);
+     
+    public:
+        ISBNPrefix(const char* filename);
+        bool registered(int area) const;
+        int minNoDigits(int area) const;
+        int registered(int area, const char* publisher) const;
+        ~ISBNPrefix();
+};
+dbutcher@matrix:~/oop244/a3> cat ISBNPrefix.h[10Pwhoamicat ISBNPrefix.h cpp
+/**
+  * Name: ISBNPrefix.cpp
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: Nov 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+#include "ISBNPrefix.h"
+
+/* 
+ * A one-argument constructor that receives a C-style, 
+ * null-terminated string containing the name of a file that holds the prefix table 
+ */
+ISBNPrefix::ISBNPrefix(const char* filename) 
+{	
+    fp = fopen(filename, "r");
+}   
+
+/*
+ * A query that receives an area identifier and determines if the area is listed 
+ */
+bool ISBNPrefix::registered(int area) const
+{
+    char fld2[8], fld3[8];
+    int areaNum = 0;
+    bool found = false;
+   
+    rewind (fp);
+    while(!found && (3 == fscanf(fp, "%d %s %s\n", &areaNum, fld2, fld3))){
+        if(area == areaNum){
+            found = true;
+	 }
+    }
+    return found;
+}
+
+/*
+ * A query that receives an area identifier and determines the minimum number of digits 
+ * in any publisher identifier registered under that area 
+ */
+int ISBNPrefix::minNoDigits(int area) const
+{
+    char fld2[8], fld3[8];
+    int areaNum;
+
+    rewind (fp);
+    while(3 == fscanf(fp, "%d %s %s\n", &areaNum, fld2, fld3)){
+        if(area == areaNum)
+        return strlen(fld2);
+    }
+    return 0;
+}
+
+/* 
+ * A query that receives an area identifier along with a publisher identifier 
+ * and determines if the publisher identifier is within a publisher range listed under that area
+ */ 
+int ISBNPrefix::registered(int area, const char* publisher) const
+{
+    char fld2[8], fld3[8];
+    int areaNum = 0;
+    bool found = false;
+    int fld2toInt;
+    int fld3toInt;
+    int publishertoInt;
+
+    rewind (fp);
+    while(!found && (3 == fscanf(fp, "%d %s %s\n", &areaNum, fld2, fld3))){
+        fld2toInt = atoi(fld2);
+        fld3toInt = atoi(fld3);
+        publishertoInt = atoi(publisher);
+        if(area == areaNum){
+            if(strlen(publisher) >= strlen(fld2)){
+                if(publishertoInt >= fld2toInt && publishertoInt <= fld3toInt){
+                    found = true;
+                }
+            }
+        }
+    }
+    return found;
+}
+
+/*
+ * A destructor that cleans up before the current object goes out of scope  
+ */
+ISBNPrefix::~ISBNPrefix()
+{
+    fclose(fp);
+}
+
+/*
+ *  A copy constructor that receives a reference to a ISBNPrefix object. 
+ */
+ISBNPrefix::ISBNPrefix(const ISBNPrefix& source){
+    *this = source;
+}
+
+/*
+ *  An assignment operator that receives a reference to an unmodifable ISBNPrefix object. 
+ */
+ISBNPrefix& ISBNPrefix::operator=(const ISBNPrefix& source){
+    delete fp;
+    fp = source.fp;	
+    return *this;
+}
+dbutcher@matrix:~/oop244/a3> cat ISBNPrefix.cpp[2Ph        .h
+/**
+  * Name: ISBN.h
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: November 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+using namespace std;
+
+class ISBNPrefix;
+
+class ISBN{
+        char isbnNumber[13];
+        char area[6];
+        char publisher[8];
+        char title[8];
+        int outputStyle;
+        bool isbnRegistered;
+        bool isRegistered(const ISBNPrefix& list);
+
+    public:
+        ISBN();
+        ISBN(const char* str, const ISBNPrefix& list);
+        bool isregistered(const ISBNPrefix& list);
+        void style(char c);
+        bool empty() const;
+        bool registered() const;
+        void toStr(char* str) const;
+        void toStrWithStyle(char* str) const;
+        void display(ostream& os) const;
+        bool read(istream& is, const ISBNPrefix& list);
+		
+        // Accessors and Mutators
+        const char * getArea() const { return area; }
+        const char * getPublisher() const {return publisher; }
+        const char * getTitle() const { return title; }
+        const char * getISBN() const { return isbnNumber; }
+        void setStyle(int style){ outputStyle = style; }
+              
+        // Overloaded Operators
+        friend int operator==(const ISBN& left, const ISBN& right);
+        friend ostream& operator<<(ostream& os, const ISBN& isbn);
+};
+
+bool isValid(const char* str);
+dbutcher@matrix:~/oop244/a3> cat ISBN.h cpp
+/**
+  * Name: ISBN.cpp
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: Nov 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+
+#include <cstdio>
+#include <iostream>
+#include <cstdlib>
+#include <cstring>
+using namespace std;
+#include "ISBN.h"
+#include "ISBNPrefix.h"
+
+/*
+ * A no-argument constructor that creates an ISBN object in a safe empty state 
+ */
+ISBN::ISBN(){
+    strcpy(isbnNumber, "");
+    strcpy(area, "");
+    strcpy(publisher, "");
+    strcpy(title, "");
+    outputStyle = 1; //Default sytle
+    isbnRegistered = false; //Registered starts as false	
+}
+
+/*
+ * A two-argument constructor that creates an ISBN object from a C-style, 
+ * null-terminated string and checks for registration using a 
+ * reference to an ISBNPrefix object 
+ */
+ISBN::ISBN(const char* str, const ISBNPrefix& list){
+    isbnRegistered = false;
+    if(isValid(str)){
+        strcpy(isbnNumber, str);
+        if(isRegistered(list)){
+            this->outputStyle = 2;
+        }else{
+            this->outputStyle = 1;
+        }       
+    }else{
+        // Set to Safe State
+        strcpy(isbnNumber, "");
+        strcpy(area, "");
+        strcpy(publisher, "");
+        strcpy(title, "");
+        outputStyle = 1; 
+    }		
+}
+
+/*
+ * A modifier that receives a single character and sets the output style 
+ * If the ISBN is registered and the character received is ' ', '-'  or '\0', 
+ * this member function sets the output style to the corresponding one.  
+ * Otherwise, this member function leaves the style unchanged. 
+ */
+void ISBN::style(char c){
+    if(c == ' '){
+        outputStyle = 3;
+    }
+    else if(c == '-'){
+        outputStyle = 2;
+    }
+    else if(c == '\0'){
+        outputStyle = 1;
+    }
+    else{
+        outputStyle = 1;
+    }
+}
+
+/*
+ * A query that returns true if the object is in a safe empty state, false otherwise
+ */ 
+bool ISBN::empty() const{
+    bool flag = false;
+    if(strcmp(isbnNumber, "") == 0 && strcmp(area, "") == 0 && strcmp(publisher, "") == 0 && strcmp(title, "") == 0){
+        flag = true;
+    }
+    return flag;
+}
+
+/*
+ * A query that returns true if the object is registered, false otherwise 
+ */
+bool ISBN::registered() const{
+    bool flag = false;
+    if(isbnRegistered == true){
+        flag = true;
+    }
+    return flag;
+}
+
+/*
+ * A query that passes the ISBN string through the function's parameter 
+ * in the form of an unformatted, C-style, null-terminated string 
+ */
+void ISBN::toStr(char* str) const{
+    strcpy(str, isbnNumber);
+}
+
+/*
+ * A query that returns the ISBN string through the function's parameter 
+ * in the form of a formatted C-style null-terminated string 
+ * This string consists of the area, publisher and title components separated by the style delimiter 
+ * for a registered object (as shown above).  The string is in 
+ * the concatenated style if the object is unregistered. 
+ */
+void ISBN::toStrWithStyle(char* str) const{
+    if(outputStyle == 3){
+        strcpy(str,area);
+        strcat(str," ");
+        strcat(str,publisher);
+        strcat(str," ");
+        strcat(str,title);
+        strcat(str," ");
+        str[12] = isbnNumber[9];
+        str[13] = '\0';
+    }
+    else if(outputStyle == 2){
+        strcpy(str,area);
+        strcat(str,"-");
+        strcat(str,publisher);
+        strcat(str,"-");
+        strcat(str,title);
+        strcat(str,"-");
+        str[12] = isbnNumber[9];
+        str[13] = '\0';
+    }
+    else if(outputStyle == 1){
+        strcpy(str, isbnNumber);
+    }
+}
+
+/*
+ * A private modifier that receives a reference to an ISBNPrefix object and, 
+ * if possible, decomposes an ISBN string into area, publisher and title components 
+ */
+bool ISBN::isRegistered(const ISBNPrefix& list){
+    int i = 0;
+    char value[6]; 
+    int areaFound = 0;  
+    int valueToInt = 0;
+    int valueLen = 0;
+    int pubLen = 0;
+    char tempVal[6];
+    char pub[8];
+    char tempPub[8];
+    char titleLine[6];
+    int notFound = 0;
+
+    // If the string is valid ex. "0000000000"
+    // While areaFound is not true and the area is less than 5 example.
+    // area->[99926] publisher range->[600 - 999].
+    
+    if(isValid(isbnNumber) == true){ 
+        while(!areaFound && i<5){
+	    
+           // Copy ISBN into temporary area called Value.
+           // Convert value from string to a integer, so
+           // that it can be passed into registeredArea as an Int.
+
+            value[i] = isbnNumber[i];
+            value[i+1] = '\0';
+            valueToInt = atoi(value);
+	     
+            // Checks is integer is a registered Area 
+            // If so adds a NULL byte end of temp Area string
+            // Set areaFound to true.
+            // Else set areaFound to false and increment i. 
+            // The process will continue to loop until area found or 
+            // 5 numbers are copied into the Area. 
+
+            if(list.registered(valueToInt) == true){
+                valueLen = strlen(value); 
+                strcpy(area,value);               
+                areaFound = 1;
+            }else{
+                areaFound = 0;
+                i++;
+            } 
+        }
+	
+        if(areaFound){
+
+            // If area is FOUND copy chars into publisher. 
+            // (strlen(str) - valueLen) - Tells how much chars need to be copied.
+            // str[valueLen + i] - Tells start of Publisher chars.
+            // Adds the NULL byte to the string. 
+
+            for(i = 0; i <(strlen(isbnNumber) - valueLen) && isbnNumber[i] != '\0'; i++){     
+                pub[i] = isbnNumber[valueLen + i];
+                pub[i+1] = '\0';      
+            }
+
+            // On every repitition, checks if tempPub is a registered ISBN
+            // Loops until end of string or Publisher Found.
+            // Returns true if found.
+
+            for(i = 0; i < (strlen(isbnNumber) - valueLen) && !notFound; i++){
+                tempPub[i] = pub[i];
+                tempPub[i+1] = '\0';
+	     
+                if(list.registered(valueToInt, tempPub)== true){
+                    pubLen = strlen(tempPub); 
+                    strcpy(publisher, tempPub);
+		  
+                    for(i = 0; i < ((strlen(isbnNumber) -  (valueLen + pubLen))-1); i++){
+                        titleLine[i] = isbnNumber[(valueLen + pubLen) +i];
+                        titleLine[i+1] = '\0';
+                    }
+                    strcpy(title, titleLine);
+                    notFound = 1;
+                    isbnRegistered = true;
+                    return notFound;
+                }
+            }
+        }
+        else{
+            // Return False if area NOT found.
+            return false;
+        } 
+    }
+    else{
+	// Return False if ISBN is NOT valid.
+	return false;
+    }
+}
+
+/*
+ * A query that receives a reference to an  ostream object and inserts the ISBN string 
+ * in the current output style into the output stream os
+ */  
+void ISBN::display(ostream& os) const{
+    char displayString[14];
+    strcpy(displayString, isbnNumber);
+
+    if(isbnRegistered){
+        toStrWithStyle(displayString);
+    }
+    else{
+        toStr(displayString);
+    }
+    os.width(13);
+    os << right << displayString;
+}
+
+/* 
+ * A modifier that receives a reference to an istream object along with a reference 
+ * to an ISBNPrefix object, reads an ISBN string from the input stream and, 
+ * if possible, stores it in the current object 
+ */
+bool ISBN::read(istream& is, const ISBNPrefix& list){
+    char isbnString[11];
+    int continueGoing = true;
+    int flag = false;
+	
+    do{
+        cout << "ISBN (0 to quit): ";
+        is.getline(isbnString, 11);
+        if(is == false){
+            is.clear();
+	     is.ignore(2000, '\n');
+            cerr << "Error. Try Again " << endl;
+        }else if(strcmp(isbnString, "0") == 0){ 
+            continueGoing = false;
+        }else if(strlen(isbnString) != 10){ 
+            cerr << "Too few characters. Try again." << endl;
+        }else if(isValid(isbnString) == false){
+            cerr << "Invalid check digit. Try again." << endl;
+        }else{
+            strcpy(isbnNumber, isbnString);
+            isRegistered(list);
+            ISBN(isbnString, list);
+            flag = true;
+            continueGoing = false;
+         }
+		
+    }while(continueGoing == true);
+    return flag;
+}
+
+/*
+ * A GLOBAL function that checks whether an ISBN number is valid
+ */
+bool isValid(const char* str){
+    int strLength = 0;
+    int i = 0;
+    int subTotal = 0;
+    int tenDecrementToTwo = 10;
+    int remainder = 0;
+    int returnCase = 1;
+   
+    // Checks if string is empty.
+    // If empty return false.
+    if (str != NULL && str !=""){
+        strLength = strlen(str); 
+    }else{      
+        return false; 
+    }
+
+    // Decrements from 10 to 2 and multiplying the products
+    // and then adding them into subtotal.
+    // Checks subtotal Modulo 11 and gets value.
+    // Returns true if str is valid else returns false.
+ 
+    if (strLength == 10){
+        for (i = 0; i < (strLength -1); i++){
+            if (str[i] >= '0' && str[i] <= '9')
+                subTotal =  subTotal + ((str[i] - '0') * ((--tenDecrementToTwo)+1)); 
+        }
+
+        if (str[9] == 'X'){     
+            subTotal = subTotal + 10;
+        }
+        else{
+            subTotal = subTotal + (str[i] - '0');
+        }
+        remainder = subTotal % 11; 
+    }
+    else{
+        remainder = 1;
+    }
+
+    if (remainder){ 
+       returnCase = 0;
+    }
+    return returnCase;
+}
+
+/*
+ * An overloaded operator that receives references to two unmodifiable ISBN objects 
+ * and compares the objects for equality.
+ */
+int operator==(const ISBN& left, const ISBN& right) {
+    bool flag = false;
+
+    if (strcmp(left.isbnNumber, right.isbnNumber) == 0) 
+        flag = true;
+    return flag;
+}
+
+/*
+ * An overloaded operator that receives a reference to an ostream object 
+ * along with a reference to an unmodifiable ISBN object and display 
+ * the object on the specified output stream. 
+ */
+ostream& operator<<(ostream& os, const ISBN& isbn) {
+    char isbnString[14];
+
+    strcpy(isbnString, isbn.isbnNumber);
+    
+    if (isbn.isbnRegistered){
+        isbn.toStrWithStyle(isbnString);
+    }
+    else{
+        isbn.toStr(isbnString);
+    }	
+    cout.width(13);        
+    cout << right << isbnString; 
+}dbutcher@matrix:~/oop244/a3> cat ISBN.cpp        Order.h
+/**
+  * Name: Order.h
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: November 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+#include <cstdio>  
+#include <cstdlib>  
+#include <cstring>
+#include <iostream>
+using namespace std;
+#include "ISBN.h"
+
+class Order {
+        int ordered;
+        int delivered;
+        int outputStyle;
+        ISBN isbnNo;
+
+    public:
+        Order(){ setIsbn(); } // Set safe emty calling setIsbn mutator method
+        Order(const ISBN& isbn);
+        void setIsbn(); // Mutator 
+        void style(char c);
+        int has(const ISBN& isbn) const;
+        int onOrder() const{ return ordered; } // Returns Ordered
+        int order(istream& is);
+        int order(int add);
+        int receive(istream& is);
+        void display(ostream& os) const;
+      
+        // Overloaded Operator
+        friend ostream& operator<<(ostream& os, const Order& order);
+};dbutcher@matrix:~/oop244/a3> cat Order.h cpp
+/**
+  * Name: Order.cpp
+  * Author: Darren Butcher
+  * Student #: 012882098
+  * Assignment: Assignment #3 - OOP244
+  * Last Date Updated: November 26th 2010
+  * 
+  * Student Oath:
+  * "This assignment represents my own work in accordance with Seneca Academic Policy"
+  * Signature: Darren Butcher
+ **/
+
+#include "Order.h"
+#include "ISBNPrefix.h"
+#define PREFIX "prefixRanges.txt"  
+
+/*
+ * Set object to a safe empty state
+ */
+void Order::setIsbn(){
+    ordered = 0;
+    delivered = 0;
+    outputStyle = 1;
+    this->isbnNo;
+}
+
+/*
+ * A one-argument constructor that receives a reference to an ISBN object 
+ * and initializes an Order object for that ISBN
+ */
+Order::Order(const ISBN& isbn) {
+    setIsbn();
+    this->isbnNo = isbn;
+}
+
+/*
+ * A modifier that receives a style character and resets the output format for the Order object
+ */
+void Order::style(char c) {
+    if(c == ' '){
+        outputStyle = 3;
+    }
+    else if(c == '-'){
+        outputStyle = 2;
+    }
+    else if(c == '\0'){
+        outputStyle = 1;
+    }
+    else{
+        outputStyle = 1;
+    }
+}
+
+/*
+ * A query that receives a reference to an ISBN object and returns true 
+ * if the Order object is for that ISBN, false otherwise
+ */
+int Order::has(const ISBN& isbn) const {
+    bool flag = false;
+    ISBNPrefix list(PREFIX);
+
+    if (isbn == ISBN(isbnNo.getISBN(), list)) 
+        flag = true;
+    return flag;
+}
+
+/*
+ * A modifier that receives a reference to an istream object and increases 
+ * the number of copies to be ordered based upon data received from input stream is
+ */
+int Order::order(istream& is){
+    bool flag = false;
+    bool continueGoing = true; 
+    bool isChanged = false;
+    int iStream;
+
+    while (continueGoing){
+        cout << "Quantity (0 to quit) : ";
+        is >> iStream;
+        if (!is){
+             is.clear();
+             is.ignore(2000, '\n');
+             cerr << "Error. Try Again " << endl;
+        }
+        else if(iStream == 0){
+             cerr << "**No delivery recorded!" << endl; 
+             continueGoing = false;
+        }
+        else if(iStream < 0){ 
+             cerr << "Enter a positive number.  Try again." << endl; 
+        }
+        else{
+             ordered = ordered + iStream;
+             isChanged = true;
+             continueGoing = false;
+        }  
+    }
+    if(isChanged) 
+        flag = true;
+    return flag;
+}
+
+/*
+ * A modifier that receives the number of copies to be added to the current order
+ */
+int Order::order(int add) {
+    bool flag = false;
+    ISBNPrefix list(PREFIX);
+    ISBN thisISBN(isbnNo.getISBN(), list);
+
+    if (add > 0 && thisISBN.registered()){
+        ordered = ordered + add;
+        flag = true;
+    } 
+    return flag;
+}
+
+/*
+ * A modifier that receives a reference to an istream object 
+ * and records receipt of copies based upon data from the input stream
+ */
+int Order::receive(istream& is){
+    bool flag = false;
+    bool continueGoing = true; 
+    bool isChanged = false;
+    int iStream;
+ 
+    while (continueGoing){
+        cout << "Quantity (0 to quit) : ";
+        is >> iStream;
+        if (!is) {
+            is.clear();
+            is.ignore(2000, '\n');
+            cerr << "Error. Try Again " << endl;
+        }
+        else if (iStream == 0){
+            continueGoing = false;
+        }
+        else if (iStream < 0){
+            cerr << "Positive value only. Try again." << endl;
+        }
+        else if (iStream > ordered){
+            cerr << iStream << " not on order. Only " << ordered << " are on order. Try again. " << endl;
+        }
+        else{
+            delivered = delivered + iStream;
+            isChanged = true;
+            continueGoing = false;
+        }
+         
+    }
+    if (isChanged) 
+        flag = true;
+    return flag;
+}
+
+/*
+ * A query that receives a reference to an ostream object and displays the current object on the output stream
+ */
+void Order::display(ostream& os) const {
+    ISBNPrefix list(PREFIX);
+    ISBN thisISBN(isbnNo.getISBN(), list);
+    thisISBN.setStyle(outputStyle);
+   
+    os << thisISBN << "  " << *this;
+}
+
+/*
+ * An overloaded operator that receives a reference to an ostream object along with 
+ * a reference to an unmodifiable Order object and inserts that object's 
+ * information into the specified output stream
+ */ 
+ostream& operator<<(ostream& os, const Order& order) {
+    os << "     " << order.ordered << "       " << order.delivered;
+    return os;
+}dbutcher@matrix:~/oop244/a3> cat Order.cpp[2PhISBN.cpp[2PhPrefix.cpp[2Ph[10Pwhoami[2Pexit[1@a.outg++ a4main.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp SpeecialOrder.cpp[Adbutcher@matrix:~/oop244/a3> g++ a4main.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp Sdbutcher@matrix:~/oop244/a3> cat a4main.cpp [K
+[K[Adbutcher@matrix:~/oop244/a3> cat a4main.cpp [10Pa.outcat a4main.cpp [10Pa.outg++ a4test.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp SpeecialOrder.cppp              [Adbutcher@matrix:~/oop244/a3> g++ a4test.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp Sp [K[Adbutcher@matrix:~/oop244/a3> g++ a4test.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp S[K
+[K[Adbutcher@matrix:~/oop244/a3> g++ a4test.cpp ISBNPrefix.cpp ISBN.cpp Order.cpp S   p4[1P[1@2[1P[1@3
+dbutcher@matrix:~/oop244/a3> a.out
+Prefix Tests
+============
+Passed test    1 (registered(-1))
+Passed test    2 (registered(99955))
+Passed test    3 (registered(0))
+Passed test    4 (registered(-1, 0))
+Passed test    5 (registered(99955, 0))
+Passed test    6 (registered(0, 10))
+Passed test    7 (registered(99955, 0))
+Passed test    8 (registered(0, 95000000))
+Passed test    9 (minNoDigits(-1))
+Passed test   10 (minNoDigits(0))
+Passed test   11 (minNoDigits(92))
+Passed test   12 (minNoDigits(99955))
+
+Prefix Tests passed!
+
+ISBN Tests
+==========
+Passed test   13 (ISBN() and empty())
+Passed test   14 (ISBN() and registered())
+Passed test   15 (ISBN("9070002043", ) and empty())
+Passed test   16 (ISBN("9070002043", ) and registered())
+Passed test   17 (ISBN(9070002046) and empty())
+Passed test   18 (ISBN("9070002046", ) and registered())
+Passed test   19 (toStr on ISBN() and IBSN("9070002046", ))
+Passed test   20 (ISBN(9070002043) and toStr(char*))
+Passed test   21 (ISBN(...) and toStr(char*))
+Passed test   22 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   23 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   24 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   25 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   26 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   27 (ISBN(9070002043), style(' ') and toStr(char*))
+Passed test   28 (ISBN(9070002046), style('\0') and toStr(char*))
+Passed test   29 (ISBN(9070002046) == ISBN(9070002046) returned true)
+Passed test   30 (ISBN(9070002043) == ISBN(9070002043) returned true)
+Passed test   31 (ISBN(9070002043) == ISBN(9070002046) returned false)
+
+ISBN Tests passed!
+
+ISBN/Prefix Tests
+=================
+Passed test   32 (registered() returned true for 9070002043)
+Passed test   33 (registered() returned true for 9995500000)
+Passed test   34 (registered() returned true for 0000000000)
+Passed test  134 (registered() returned true for 8070000007)
+Passed test  234 (registered() returned true for 9020000004)
+Passed test  334 (registered() returned true for 9559500007)
+Passed test  434 (registered() returned true for 9679989003)
+Passed test  534 (registered() returned true for 9781990007)
+Passed test  634 (registered() returned true for 9946000008)
+Passed test  734 (registered() returned true for 9961700007)
+Passed test  834 (registered() returned true for 9976999909)
+Passed test  934 (registered() returned true for 9990389004)
+Passed test 1034 (registered() returned true for 9992200006)
+Passed test 1134 (registered() returned true for 9993990000)
+
+ISBN/Prefix Tests passed!
+
+Order Tests
+===========
+Passed test 1155 (Order(), has(ISBN()) returned true)
+Passed test 1156 (Order(), onOrder() returned 0)
+Passed test 1157 (has("9070002043"), onOrder())
+Passed test 1158 (has("9070002043"), onOrder())
+Passed test 1159 (has("9070002046"), onOrder())
+Passed test 1160 (has("9070002046"), order(5), onOrder())
+
+Order Tests passed!
+
+
+Your Bookstore modules have passed 1160 of 1160 tests
+
+Congratulations!!!   Your Bookstore modules are ready for submission
+
+dbutcher@matrix:~/oop244/a3> cat a3main.cpp 
+// Bookstore Order Processor
+// OOP244.101 - Assignment 3
+// a3main.cpp
+// Version 1.00
+// Chris Szalwinski
+// Jan 10 2010
+
+#include <cstdio>
+#include <iostream>
+using namespace std;
+#include "ISBNPrefix.h"
+#include "Order.h"
+
+#define MAXORDERS 100
+char menu(istream& is);
+char style(istream& is);
+
+int main() {
+    char c, choice;
+    int noOrders = 0;
+    Order* order[MAXORDERS];
+    ISBNPrefix prefixList("prefixRanges.txt");
+
+    cout << "Bookstore Order Processor\n"
+         << "=========================\n";
+
+    // process user input
+    do {
+        choice = menu(cin);
+        cout << endl;
+        switch(choice) {
+            case 'P':
+                {
+                    ISBN isbn;
+                    if (isbn.read(cin, prefixList)) {
+                        int index = -1, created = false;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (order[i]->has(isbn))
+                                index = i;
+                        if (index == -1)
+                            if (noOrders < MAXORDERS) {
+                                index = noOrders;
+                                order[noOrders++] = new Order(isbn);
+                                created = true;
+                            }
+                            else
+                                cerr << "No space for more orders!" << endl;
+                        if(!order[index]->order(cin) && created)
+                            delete order[--noOrders];
+                    }
+                }
+                break;
+            case 'A':
+                {
+                    ISBN isbn;
+                    if (isbn.read(cin, prefixList)) {
+                        int index = -1;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (order[i]->has(isbn))
+                                index = i;
+                        if (index != -1)
+                            order[index]->order(1);
+                        else {
+                            cerr << "No order for ";
+                            isbn.display(cerr);
+                            cerr << " found!" << endl;
+                        }
+                    }
+                }
+                break;
+            case 'D':
+                {
+                    ISBN isbn;
+                    if (isbn.read(cin, prefixList)) {
+                        int index = -1;
+                        for (int i = 0; i < noOrders && index == -1; i++)
+                            if (order[i]->has(isbn))
+                                index = i;
+                        if (index != -1)
+                            order[index]->receive(cin);
+                        else {
+                            cerr << "No order for ";
+                            isbn.display(cerr);
+                            cerr << " found!" << endl;
+                        }
+                    }
+                }
+                break;
+            case 'V':
+                cout << "         ISBN  Ordered  Delivered\n";
+                cout << "---------------------------------\n";
+                for (int i = 0; i < noOrders; i++) {
+                    order[i]->display(cout);
+                    cout << endl;
+                }
+                break;
+            case 'C':
+                c = style(cin);
+                for (int i = 0; i < noOrders; i++) {
+                    order[i]->style(c);
+                }
+                break;
+        }
+    } while (choice != 'Q');
+
+    cout << "\nSigning off ... " << endl;
+    // deallocate order memory
+    for (int i = 0; i < noOrders; i++)
+        delete order[i];
+    return 0;
+}
+
+// menu prompts for and accepts an option selection from standard input and
+// returns the character identifying the selected option
+//
+char menu(istream& is) {
+    char c;
+    int  ok = false;
+
+    cout << '\n';
+    cout << "Please select from the following options :\n";
+    cout << " P - Place an order with a publisher\n";
+    cout << " A - Add one copy to an existing order\n";
+    cout << " D - Record a delivery from a publisher\n";
+    cout << " V - View status of books on order\n";
+    cout << " C - Configure order display\n";
+    cout << " Q - Quit\n";
+    do {
+        cout << " Your selection : ";
+        c = ' ';
+        is.get(c);
+        if (c >= 'a' && c <= 'z')
+            c -= 'a' - 'A';
+        if (is.fail()) {
+            is.clear();
+            is.ignore(2000, '\n');
+            cerr << " Invalid input.  Try again." << endl;
+        } else if (c == '\n') {
+            ; // no input - try again
+        } else if (c != 'P' && c != 'A' && c != 'D' && c != 'V'
+         && c != 'C' && c != 'Q') {
+            is.ignore(2000, '\n');
+            cerr << " Invalid Character.  Try again." << endl;
+        } else if (is.get() != '\n') {
+            is.ignore(2000, '\n');
+            cerr << " Trailing Characters.  Try Again. " << endl;
+        } else if (c == 'P' || c == 'A' || c == 'D' || c == 'V'
+         || c == 'C' || c == 'Q')
+            ok = true;
+    } while (ok == 0);
+
+    return c;
+}
+
+// style prompts for and accepts a character identifying the output style
+// to be used and returns the character itself
+//
+char style(istream& is) {
+    char cc;
+    int c, ok = 0;
+
+    do {
+        cout << "Style Mark (enter ' ','-' or '') : ";
+        c = is.get();
+        cc = (char)c;
+        if (is.fail()) {
+            is.clear();
+            is.ignore(2000, '\n');
+            cerr << " Invalid input.  Try again." << endl;
+        }
+        else if (cc != ' ' && cc != '-' && cc != '\n') {
+            is.ignore(2000, '\n');
+            cerr << "Invalid character.  Try again." << endl;
+        }
+        else if ((cc == ' ' || cc == '-') && is.get() != '\n') {
+            is.ignore(2000, '\n');
+            cerr << "Trailing characters.  Try again." << endl;
+        }
+        else {
+            ok = 1;
+            if (cc == '\n') cc = '\0';
+        }
+    } while (ok == 0);
+
+    return cc;
+}
+dbutcher@matrix:~/oop244/a3> a.o   cat a3main.cpp [10Pa.outg++ a3test.cpp ISBNPrefix.cpp ISBN.cpp Order.cppt[1P[1P[1P[1P[1@m[1@a[1@i[1@n
+dbutcher@matrix:~/oop244/a3> a.out
+Bookstore Order Processor
+=========================
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : p
+
+ISBN (0 to quit): 90700020439070002043          
+Quantity (0 to quit) : 15
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : p
+
+ISBN (0 to quit): 0003194876
+Quantity (0 to quit) : 30
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : c
+
+Style Mark (enter ' ','-' or '') :  
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : r
+ Invalid Character.  Try again.
+ Your selection : d
+
+ISBN (0 to quit): 90700020439070002043          
+Quantity (0 to quit) : 10
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : d
+
+ISBN (0 to quit): 0003194875
+Invalid check digit. Try again.
+ISBN (0 to quit): 00031948760003194876          
+Quantity (0 to quit) : -20
+Positive value only. Try again.
+Quantity (0 to quit) : 0
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : v
+
+         ISBN  Ordered  Delivered
+---------------------------------
+90 70002 04 3       15       10
+0 00 319487 6       30       0
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : d
+
+ISBN (0 to quit): 00031948760003194876          
+Quantity (0 to quit) : 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : c
+
+Style Mark (enter ' ','-' or '') : -
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : p
+
+ISBN (0 to quit): 9995500000
+Quantity (0 to quit) : 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : v
+
+         ISBN  Ordered  Delivered
+---------------------------------
+90-70002-04-3       15       10
+0-00-319487-6       30       20
+   9995500000       20       0
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : a
+
+ISBN (0 to quit): 0003194876
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : d
+
+ISBN (0 to quit): 9995500000
+Quantity (0 to quit) : 25
+25 not on order. Only 20 are on order. Try again. 
+Quantity (0 to quit) : 20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection :  Your selection : v
+
+         ISBN  Ordered  Delivered
+---------------------------------
+90-70002-04-3       15       10
+0-00-319487-6       31       20
+   9995500000       20       20
+
+Please select from the following options :
+ P - Place an order with a publisher
+ A - Add one copy to an existing order
+ D - Record a delivery from a publisher
+ V - View status of books on order
+ C - Configure order display
+ Q - Quit
+ Your selection : q
+
+
+Signing off ... 
+dbutcher@matrix:~/oop244/a3> exit
+exit
+
+Script done on Sat Dec 18 20:07:22 2010
